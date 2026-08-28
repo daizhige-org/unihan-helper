@@ -39,9 +39,20 @@ const tooltips = new Map<HTMLElement, Tooltip>();
 function checkDisabled(): boolean {
     const ep = mw.util.getParamValue('UTdontload');
     if (ep && !isNaN(Number(ep))) {
-        $.cookie('UTdontload', '1', { path: '/', expires: parseInt(ep) });
+        // mw.cookie 的 expires 为数字时以秒计，而 $.cookie 以天计，故乘 86400。
+        // prefix 传空串以写裸 cookie 名：mw.cookie 默认会加上本 wiki 的
+        // $wgCookiePrefix，而 UTdontload 沿用自 Gadget-UnihanTooltips.js 的约定，
+        // 是不带前缀的名字，加前缀会让此前设过该 cookie 的用户被静默地重新启用。
+        mw.cookie.set('UTdontload', '1', {
+            path: '/',
+            prefix: '',
+            expires: parseInt(ep, 10) * 86400,
+        });
     }
-    return $.cookie('UTdontload') === '1';
+    // 第二个参数是前缀，同样传空串以读裸名。mw.cookie.get 内部用的是
+    // `if (prefix === undefined || prefix === null)` 这一严格判断，空串会被
+    // 如实采用，不会退回默认前缀，故与上面的写入是对称的。
+    return mw.cookie.get('UTdontload', '') === '1';
 }
 
 /**
