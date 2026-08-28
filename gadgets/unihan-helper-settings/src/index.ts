@@ -93,8 +93,9 @@ export function openDialog(
   onLoadFonts?: () => Promise<FontInfo[]>,
   initialLoadError?: boolean
 ): void {
-  // 过滤掉隐藏的字体
-  const visibleFonts = fonts ? fonts.filter((font) => font.id !== 'SourceHanSans') : [];
+  // 四款字体都已按「排除系统通常已有的码位」切片，思源黑体所剩的也都是
+  // 系统未必有的字，故不再隐藏。
+  const visibleFonts = fonts ?? [];
 
   // 如果已经有实例，先销毁
   if (app && mountPoint) {
@@ -164,9 +165,7 @@ export function openDialog(
         this.fontsLoading = true;
         this.fontsLoadError = false;
         try {
-          const loadedFonts = await onLoadFonts();
-          const filtered = loadedFonts.filter((font) => font.id !== 'SourceHanSans');
-          this.fonts = filtered;
+          this.fonts = await onLoadFonts();
           this.fontsLoaded = true;
         } catch (error) {
           console.error('Failed to load fonts:', error);

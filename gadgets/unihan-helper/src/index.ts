@@ -39,9 +39,16 @@ const tooltips = new Map<HTMLElement, Tooltip>();
 function checkDisabled(): boolean {
     const ep = mw.util.getParamValue('UTdontload');
     if (ep && !isNaN(Number(ep))) {
-        $.cookie('UTdontload', '1', { path: '/', expires: parseInt(ep) });
+        // mw.cookie 的 expires 以秒计，而 $.cookie 用的是天，故乘 86400。
+        // prefix 传空串以写裸 cookie 名：mw.cookie 默认会加上本 wiki 的
+        // $wgCookiePrefix，而 UTdontload 是各小工具共用的约定名。
+        mw.cookie.set('UTdontload', '1', {
+            path: '/',
+            prefix: '',
+            expires: parseInt(ep, 10) * 86400,
+        });
     }
-    return $.cookie('UTdontload') === '1';
+    return mw.cookie.get('UTdontload', '') === '1';
 }
 
 /**
@@ -64,16 +71,11 @@ async function openSettings(): Promise<void> {
         // 调用设置模块的打开函数
         const settingsModule = require('ext.gadget.unihan-helper-settings');
         if (settingsModule && typeof settingsModule.openDialog === 'function') {
-            // 如果用户已启用网络字形，尝试获取字体列表
-            // 但即使失败也继续打开对话框，让用户可以修改其他设置
-            let fontLoadError = false;
-            if (settings.useWebfont && availableFonts === null) {
-                try {
-                    availableFonts = await fetchFontList();
-                } catch (error) {
-                    console.error('Failed to fetch font list:', error);
-                    fontLoadError = true;
-                }
+            // 字体清单是编译期常量（分片为静态产物），取不到列表这件事已不会发生，
+            // 但保留错误分支以免设置对话框的接口改动。
+            const fontLoadError = false;
+            if (availableFonts === null) {
+                availableFonts = await fetchFontList();
             }
 
             settingsModule.openDialog(
@@ -230,7 +232,7 @@ async function init(): Promise<void> {
     // 初始化 overlay
     initOverlay();
 
-    // 如果启用且使用网络字形，处理生僻字
+    // 如果启用且使用网络字形，挂上分片样式表
     if (settings.enabled && settings.useWebfont) {
         processUnihanChars(settings.selectedFont, settings.loadMode);
     }

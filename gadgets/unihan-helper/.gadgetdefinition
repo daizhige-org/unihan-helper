@@ -1,1 +1,1 @@
-* unihan-helper[ResourceLoader|package|default|dependencies=ext.gadget.HanAssist]|unihan-helper.js|unihan-helper.css
+* unihan-helper[ResourceLoader|package|default|dependencies=ext.gadget.HanAssist,mediawiki.cookie,mediawiki.util,mediawiki.notification]|unihan-helper.js|unihan-helper.css
