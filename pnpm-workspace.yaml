@@ -1,5 +1,6 @@
 packages:
   - 'gadgets/*'
 allowBuilds:
-  esbuild: set this to true or false
-  hanassist: set this to true or false
+  esbuild: true
+  hanassist: true
+  vue-demi: true
