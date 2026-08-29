@@ -1,6 +1,23 @@
 packages:
   - 'gadgets/*'
+
+# 允许这几个依赖执行安装脚本。pnpm 10 起默认拦截所有依赖的构建脚本，
+# 不声明的话克隆下来第一次 `pnpm install` 会以 ERR_PNPM_IGNORED_BUILDS 中止，
+# 而 `pnpm run build` 每次都会先跑依赖检查，于是构建也一并失败。
+#
+# 两个键都留着：pnpm 11 只认 allowBuilds，pnpm 10 只认 onlyBuiltDependencies，
+# 并存不会产生警告。package.json 的 packageManager 已锁定 pnpm 版本，
+# 但绕开 corepack 直接用全局 pnpm 的人仍可能是 10.x。
+#
+# esbuild   vite 的底层打包器，postinstall 负责放置平台对应的二进制
+# vue-demi  设置对象目标 Vue 版本
+# hanassist 简繁转换，ext.gadget.HanAssist 的 npm 版
 allowBuilds:
   esbuild: true
   hanassist: true
   vue-demi: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - hanassist
+  - vue-demi
