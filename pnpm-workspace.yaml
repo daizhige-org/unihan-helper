@@ -1,2 +1,6 @@
 packages:
   - 'gadgets/*'
+allowBuilds:
+  esbuild: true
+  hanassist: true
+  vue-demi: true
