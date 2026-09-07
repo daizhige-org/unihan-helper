@@ -41,112 +41,108 @@ let observer: MutationObserver | null = null;
  * 挂上某字体的分片样式表（重复调用无副作用）
  */
 function loadStylesheet(fontId: string): void {
-    if (loadedSheets.has(fontId)) {
-        return;
-    }
-    loadedSheets.add(fontId);
+  if (loadedSheets.has(fontId)) {
+    return;
+  }
+  loadedSheets.add(fontId);
 
-    const id = LINK_ID_PREFIX + fontId;
-    if (document.getElementById(id)) {
-        return;
-    }
-    const link = document.createElement('link');
-    link.id = id;
-    link.rel = 'stylesheet';
-    link.href = buildFontCssUrl(fontId);
-    document.head.appendChild(link);
+  const id = LINK_ID_PREFIX + fontId;
+  if (document.getElementById(id)) {
+    return;
+  }
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = buildFontCssUrl(fontId);
+  document.head.appendChild(link);
 }
 
 /**
  * 所选字体加其 fallback 链，去重后按序返回
  */
 function resolveChain(fontId: string): FontInfo[] {
-    const chain: FontInfo[] = [];
-    const seen = new Set<string>();
+  const chain: FontInfo[] = [];
+  const seen = new Set<string>();
 
-    const push = (id: string): void => {
-        if (seen.has(id)) return;
-        const font = getFont(id);
-        if (!font) return;
-        seen.add(id);
-        chain.push(font);
-    };
+  const push = (id: string): void => {
+    if (seen.has(id)) return;
+    const font = getFont(id);
+    if (!font) return;
+    seen.add(id);
+    chain.push(font);
+  };
 
-    push(fontId);
-    // 只展开所选字体自身声明的 fallback，不再递归——四款互为 fallback，
-    // 递归下去等于把全部样式表都挂上。
-    (chain[0]?.fallback ?? []).forEach(push);
+  push(fontId);
+  // 只展开所选字体自身声明的 fallback，不再递归——四款互为 fallback，
+  // 递归下去等于把全部样式表都挂上。
+  (chain[0]?.fallback ?? []).forEach(push);
 
-    return chain;
+  return chain;
 }
 
 /**
  * 元素是否该被处理
  */
 function isEligible(element: HTMLElement): boolean {
-    return !element.closest(PUA_WRAPPERS);
+  return !element.closest(PUA_WRAPPERS);
 }
 
 /**
  * 把 webfont 插进单个元素的 font-family
  */
 function applyTo(element: HTMLElement): void {
-    if (!active || !isEligible(element)) {
-        return;
-    }
+  if (!active || !isEligible(element)) {
+    return;
+  }
 
-    if (!originalFamily.has(element)) {
-        originalFamily.set(element, element.style.fontFamily || '');
-    }
-    const base = originalFamily.get(element) as string;
-    const { families, loadMode } = active;
+  if (!originalFamily.has(element)) {
+    originalFamily.set(element, element.style.fontFamily || '');
+  }
+  const base = originalFamily.get(element) as string;
+  const { families, loadMode } = active;
 
-    // fallback：排在模板给的字体栈之后，本机装了其中任一款且有该字形时就用本机的，
-    // 浏览器也不会去下载对应分片。always：排在最前，覆盖本机字形。
-    let stack: string;
-    if (!base) {
-        stack = `${families}, serif`;
-    } else if (loadMode === 'fallback') {
-        stack = `${base}, ${families}`;
-    } else {
-        stack = `${families}, ${base}`;
-    }
+  // fallback：排在模板给的字体栈之后，本机装了其中任一款且有该字形时就用本机的，
+  // 浏览器也不会去下载对应分片。always：排在最前，覆盖本机字形。
+  let stack: string;
+  if (!base) {
+    stack = `${families}, serif`;
+  } else if (loadMode === 'fallback') {
+    stack = `${base}, ${families}`;
+  } else {
+    stack = `${families}, ${base}`;
+  }
 
-    element.style.fontFamily = stack;
-    touched.add(element);
+  element.style.fontFamily = stack;
+  touched.add(element);
 }
 
 /**
  * 处理当前文档里所有 .inline-unihan
  */
 function applyAll(): void {
-    document
-        .querySelectorAll<HTMLElement>(`.${CLASSES.INLINE_UNIHAN}`)
-        .forEach(applyTo);
+  document.querySelectorAll<HTMLElement>(`.${CLASSES.INLINE_UNIHAN}`).forEach(applyTo);
 }
 
 /**
  * 监听后续插入的生僻字（预览、动态加载的内容等）
  */
 function startObserver(): void {
-    if (observer || typeof MutationObserver === 'undefined') {
-        return;
-    }
-    observer = new MutationObserver((records) => {
-        if (!active) return;
-        records.forEach((record) => {
-            record.addedNodes.forEach((node) => {
-                if (!(node instanceof HTMLElement)) return;
-                if (node.classList.contains(CLASSES.INLINE_UNIHAN)) {
-                    applyTo(node);
-                }
-                node
-                    .querySelectorAll<HTMLElement>(`.${CLASSES.INLINE_UNIHAN}`)
-                    .forEach(applyTo);
-            });
-        });
+  if (observer || typeof MutationObserver === 'undefined') {
+    return;
+  }
+  observer = new MutationObserver((records) => {
+    if (!active) return;
+    records.forEach((record) => {
+      record.addedNodes.forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        if (node.classList.contains(CLASSES.INLINE_UNIHAN)) {
+          applyTo(node);
+        }
+        node.querySelectorAll<HTMLElement>(`.${CLASSES.INLINE_UNIHAN}`).forEach(applyTo);
+      });
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 /**
@@ -156,20 +152,20 @@ function startObserver(): void {
  * @param loadMode always 覆盖本机字形；fallback 则本机有该字形时优先用本机的
  */
 export function applyWebFont(fontId: string, loadMode: 'fallback' | 'always' = 'always'): void {
-    const chain = resolveChain(fontId);
-    if (chain.length === 0) {
-        console.warn(`[unihan-helper] 未知字体：${fontId}`);
-        return;
-    }
+  const chain = resolveChain(fontId);
+  if (chain.length === 0) {
+    console.warn(`[unihan-helper] 未知字体：${fontId}`);
+    return;
+  }
 
-    chain.forEach((font) => loadStylesheet(font.id));
-    active = {
-        families: chain.map((font) => `"${font.font_family}"`).join(', '),
-        loadMode,
-    };
+  chain.forEach((font) => loadStylesheet(font.id));
+  active = {
+    families: chain.map((font) => `"${font.font_family}"`).join(', '),
+    loadMode,
+  };
 
-    applyAll();
-    startObserver();
+  applyAll();
+  startObserver();
 }
 
 /**
@@ -177,8 +173,11 @@ export function applyWebFont(fontId: string, loadMode: 'fallback' | 'always' = '
  *
  * 保留此名以免调用方改动；分片按 unicode-range 自动匹配，无需再逐字处理。
  */
-export function processUnihanChars(fontId: string, loadMode: 'fallback' | 'always' = 'always'): void {
-    applyWebFont(fontId, loadMode);
+export function processUnihanChars(
+  fontId: string,
+  loadMode: 'fallback' | 'always' = 'always'
+): void {
+  applyWebFont(fontId, loadMode);
 }
 
 /**
@@ -188,9 +187,9 @@ export function processUnihanChars(fontId: string, loadMode: 'fallback' | 'alway
  * @font-face 不会触发分片请求。
  */
 export function clearAppliedFonts(): void {
-    active = null;
-    touched.forEach((element) => {
-        element.style.fontFamily = originalFamily.get(element) ?? '';
-    });
-    touched.clear();
+  active = null;
+  touched.forEach((element) => {
+    element.style.fontFamily = originalFamily.get(element) ?? '';
+  });
+  touched.clear();
 }

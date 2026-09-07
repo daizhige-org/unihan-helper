@@ -2,7 +2,17 @@
 /// <reference types="vite/client" />
 
 declare module 'ext.gadget.HanAssist' {
-  export type CandidateKey = 'other' | 'zh' | 'hans' | 'hant' | 'cn' | 'tw' | 'hk' | 'sg' | 'mo' | 'my';
+  export type CandidateKey =
+    | 'other'
+    | 'zh'
+    | 'hans'
+    | 'hant'
+    | 'cn'
+    | 'tw'
+    | 'hk'
+    | 'sg'
+    | 'mo'
+    | 'my';
   export type Candidates = Partial<Record<CandidateKey, string>>;
   /**
    * Select between candidates based on user language.
@@ -24,17 +34,20 @@ declare module 'ext.gadget.HanAssist' {
    * @returns converted candidates dictionary
    */
   export function batchConv<T extends string>(
-    candidatesDict: Record<T, string | Candidates>, locale?: string,
+    candidatesDict: Record<T, string | Candidates>,
+    locale?: string
   ): Record<T, string>;
 }
 
 declare module '*.vue' {
-    import type { DefineComponent } from 'vue';
-    const component: DefineComponent<{}, {}, any>;
-    export default component;
+  import type { DefineComponent } from 'vue';
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-explicit-any
+  const component: DefineComponent<{}, {}, any>;
+  export default component;
 }
 
 declare module '*.json' {
-    const value: any;
-    export default value;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const value: any;
+  export default value;
 }

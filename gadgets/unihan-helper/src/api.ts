@@ -14,19 +14,19 @@ import type { FontInfo } from './types';
  * 保留 async 签名，以免调用方（含设置对话框的 onLoadFonts 回调）需要改动。
  */
 export async function fetchFontList(): Promise<FontInfo[]> {
-    return FONTS;
+  return FONTS;
 }
 
 /**
  * 按 id 取字体信息
  */
 export function getFont(fontId: string): FontInfo | undefined {
-    return FONTS.find((font) => font.id === fontId);
+  return FONTS.find((font) => font.id === fontId);
 }
 
 /**
  * 某字体的分片样式表 URL
  */
 export function buildFontCssUrl(fontId: string): string {
-    return `${STATIC_BASE}/${fontId}/${fontId}-${CHUNK_SIZE}.css`;
+  return `${STATIC_BASE}/${fontId}/${fontId}-${CHUNK_SIZE}.css`;
 }
