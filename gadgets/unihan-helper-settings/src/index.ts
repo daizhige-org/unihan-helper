@@ -5,7 +5,7 @@
 import { createMwApp } from 'vue';
 import { CdxDialog, CdxField, CdxLabel, CdxRadio, CdxToggleSwitch } from '@wikimedia/codex';
 import { batchConv } from 'ext.gadget.HanAssist';
-import type { FontInfo, Settings } from './types';
+import type { FontInfo, Settings } from 'ext.gadget.unihan-helper';
 
 // 设置多语言消息
 mw.messages.set(
@@ -20,7 +20,7 @@ mw.messages.set(
     'unihan-use-webfont-desc': {
       cn: '使用网络字形显示罕用字。启用本选项，视为您同意《<a href="https://wikitech.wikimedia.org/wiki/Wikitech:Cloud_Services_End_User_Terms_of_use" target="_blank" rel="noopener noreferrer">维基媒体云服务最终用户使用条款</a>》。',
       hk: '使用網絡字型顯示罕用字。啟用本選項，視為您同意《<a href="https://wikitech.wikimedia.org/wiki/Wikitech:Cloud_Services_End_User_Terms_of_use" target="_blank" rel="noopener noreferrer">維基媒體雲端服務最終用戶使用條款</a>》。',
-      tw: '使用網路字型顯示罕用字。啟用本選項，視為您同意《<a href="https://wikitech.wikimedia.org/wiki/Wikitech:Cloud_Services_End_User_Terms_of_use" target="_blank" rel="noopener noreferrer">維基媒體雲端服務最終使用者條款</a>》。'
+      tw: '使用網路字型顯示罕用字。啟用本選項，視為您同意《<a href="https://wikitech.wikimedia.org/wiki/Wikitech:Cloud_Services_End_User_Terms_of_use" target="_blank" rel="noopener noreferrer">維基媒體雲端服務最終使用者條款</a>》。',
     },
     'unihan-load-mode': { cn: '网络字形加载模式', hk: '網絡字型載入模式', tw: '網路字型載入模式' },
     'unihan-load-mode-fallback': { hans: '优先使用系统字形', hant: '優先使用系統字型' },
@@ -36,9 +36,17 @@ mw.messages.set(
       tw: '總是使用網路字型顯示罕用字。',
     },
     'unihan-preferred-font': { hans: '偏好字体', hant: '偏好字型' },
-    'unihan-enable-webfont-to-show-fonts': { cn: '启用网络字形以显示可用字体。', hk: '啟用網絡字型以顯示可用字型。', tw: '啟用網路字型以顯示可用字型。' },
+    'unihan-enable-webfont-to-show-fonts': {
+      cn: '启用网络字形以显示可用字体。',
+      hk: '啟用網絡字型以顯示可用字型。',
+      tw: '啟用網路字型以顯示可用字型。',
+    },
     'unihan-loading-fonts': { hans: '加载可用字体中……', hant: '載入可用字型中……' },
-    'unihan-font-load-failed': { cn: '网络字体加载失败。', hk: '網絡字型載入失敗。', tw: '網路字型載入失敗。' },
+    'unihan-font-load-failed': {
+      cn: '网络字体加载失败。',
+      hk: '網絡字型載入失敗。',
+      tw: '網路字型載入失敗。',
+    },
     'unihan-version': { hans: '版本：', hant: '版本：' },
     'unihan-close': { hans: '关闭', hant: '關閉' },
     'unihan-save': { hans: '确定', hant: '確定' },
@@ -320,11 +328,11 @@ export function openDialog(
 
   app.config.globalProperties.msg = mw.msg.bind(mw);
   app.config.globalProperties.wikiUrl = mw.util.getUrl.bind(mw.util);
-  app.component('cdx-dialog', CdxDialog);
-  app.component('cdx-radio', CdxRadio);
-  app.component('cdx-field', CdxField);
-  app.component('cdx-label', CdxLabel);
-  app.component('cdx-toggle-switch', CdxToggleSwitch);
+  app.component('CdxDialog', CdxDialog);
+  app.component('CdxRadio', CdxRadio);
+  app.component('CdxField', CdxField);
+  app.component('CdxLabel', CdxLabel);
+  app.component('CdxToggleSwitch', CdxToggleSwitch);
 
   app.mount(mountPoint);
 }

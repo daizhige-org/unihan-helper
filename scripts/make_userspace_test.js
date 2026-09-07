@@ -83,7 +83,10 @@ process.stdout.write(`// <nowiki>
 \t\t\treturn realRequire( name );
 \t\t};
 
-${body.split('\n').map((l) => (l ? '\t\t' + l : '')).join('\n')}
+${body
+  .split('\n')
+  .map((l) => (l ? '\t\t' + l : ''))
+  .join('\n')}
 
 \t\tconsole.log( '[unihan-test] 已加载。当前设置：', window.unihanTest.settings() );
 \t} ).catch( function ( e ) {
