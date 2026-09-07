@@ -15,7 +15,7 @@
 
 import { buildFontCssUrl, getFont } from './api';
 import { CLASSES } from './consts';
-import type { FontInfo } from './types';
+import type { FontInfo, LoadMode } from './types';
 
 const LINK_ID_PREFIX = 'unihan-webfont-';
 
@@ -33,7 +33,7 @@ const originalFamily = new WeakMap<HTMLElement, string>();
 const touched = new Set<HTMLElement>();
 
 /** 当前生效的设置，供 MutationObserver 处理后插入的元素 */
-let active: { families: string; loadMode: 'fallback' | 'always' } | null = null;
+let active: { families: string; loadMode: LoadMode } | null = null;
 
 let observer: MutationObserver | null = null;
 
@@ -120,6 +120,12 @@ function applyTo(element: HTMLElement): void {
  * 处理当前文档里所有 .inline-unihan
  */
 function applyAll(): void {
+  // 预览、翻页等会整块替换正文，先把已不在文档里的元素从记录中清掉
+  touched.forEach((element) => {
+    if (!element.isConnected) {
+      touched.delete(element);
+    }
+  });
   document.querySelectorAll<HTMLElement>(`.${CLASSES.INLINE_UNIHAN}`).forEach(applyTo);
 }
 
@@ -151,7 +157,7 @@ function startObserver(): void {
  * @param fontId   字体 id
  * @param loadMode always 覆盖本机字形；fallback 则本机有该字形时优先用本机的
  */
-export function applyWebFont(fontId: string, loadMode: 'fallback' | 'always' = 'always'): void {
+export function applyWebFont(fontId: string, loadMode: LoadMode = 'always'): void {
   const chain = resolveChain(fontId);
   if (chain.length === 0) {
     console.warn(`[unihan-helper] 未知字体：${fontId}`);
@@ -166,18 +172,6 @@ export function applyWebFont(fontId: string, loadMode: 'fallback' | 'always' = '
 
   applyAll();
   startObserver();
-}
-
-/**
- * 处理页面中所有生僻字
- *
- * 保留此名以免调用方改动；分片按 unicode-range 自动匹配，无需再逐字处理。
- */
-export function processUnihanChars(
-  fontId: string,
-  loadMode: 'fallback' | 'always' = 'always'
-): void {
-  applyWebFont(fontId, loadMode);
 }
 
 /**

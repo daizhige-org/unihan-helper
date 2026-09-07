@@ -9,15 +9,6 @@ import { STATIC_BASE, CHUNK_SIZE, FONTS } from './consts';
 import type { FontInfo } from './types';
 
 /**
- * 获取可用字体列表
- *
- * 保留 async 签名，以免调用方（含设置对话框的 onLoadFonts 回调）需要改动。
- */
-export async function fetchFontList(): Promise<FontInfo[]> {
-  return FONTS;
-}
-
-/**
  * 按 id 取字体信息
  */
 export function getFont(fontId: string): FontInfo | undefined {

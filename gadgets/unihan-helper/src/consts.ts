@@ -2,7 +2,7 @@
  * 常量定义
  */
 
-import type { FontInfo } from './types';
+import type { FontInfo, LoadMode, Settings } from './types';
 
 /**
  * 静态分片的基址。产物由 webfont-zh-static 预先切好并同步到 Toolforge 的
@@ -17,18 +17,21 @@ export const CHUNK_SIZE = 32;
 
 export const IS_TOUCHSCREEN = 'ontouchstart' in document.documentElement;
 
-export const IS_MOBILE =
-  /Mobi|Android/i.test(navigator.userAgent) || typeof window.orientation !== 'undefined';
-
 // 存储键
 export const STORAGE_KEY = 'unihan-settings';
 
+/** 小工具停用时挂在工具菜单上的设置入口，id 用于去重与移除 */
+export const PORTLET_LINK_ID = 'unihan-settings-portlet';
+
+/** 合法的加载模式，用于校验 localStorage 里的旧值 */
+export const LOAD_MODES: readonly LoadMode[] = ['fallback', 'always'];
+
 // 默认设置
 export const DEFAULT_FONT = 'Plangothic';
-export const DEFAULT_SETTINGS = {
+export const DEFAULT_SETTINGS: Settings = {
   enabled: true,
   useWebfont: false,
-  loadMode: 'always' as 'fallback' | 'always',
+  loadMode: 'always',
   selectedFont: DEFAULT_FONT,
 };
 
@@ -93,8 +96,10 @@ export const CLASSES = {
   TOOLTIP_BELOW: 'unihan-tooltip-below',
   TOOLTIP_CONTENT: 'unihan-tooltip-content',
   TOOLTIP_TAIL: 'unihan-tooltip-tail',
+  TOOLTIP_TEXT: 'unihan-tooltip-text',
   SETTINGS_BTN: 'unihan-settings-btn-container',
-  OVERLAY: 'unihan-overlay',
+  SETTINGS_BUTTON: 'unihan-settings-button',
+  SETTINGS_ICON: 'unihan-settings-icon',
   INLINE_UNIHAN: 'inline-unihan',
 } as const;
 
