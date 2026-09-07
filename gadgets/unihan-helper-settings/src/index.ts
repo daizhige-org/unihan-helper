@@ -2,9 +2,9 @@
  * Unihan Helper Settings - 设置对话框
  */
 
-import { createMwApp } from 'vue';
+import { createMwApp, type App } from 'vue';
 import { CdxDialog, CdxField, CdxLabel, CdxRadio, CdxToggleSwitch } from '@wikimedia/codex';
-import { batchConv } from 'ext.gadget.HanAssist';
+import { batchConv, conv } from 'ext.gadget.HanAssist';
 import type { FontInfo, Settings } from 'ext.gadget.unihan-helper';
 
 // 设置多语言消息
@@ -54,7 +54,7 @@ mw.messages.set(
   })
 );
 
-let app: any = null;
+let app: App | null = null;
 let mountPoint: HTMLElement | null = null;
 
 /**
@@ -144,15 +144,13 @@ export function openDialog(
     },
     computed: {
       fontOptions() {
-        const lang = mw.config.get('wgUserLanguage');
-        const isHans = lang === 'zh-hans' || lang === 'zh-cn';
-
+        // 用 HanAssist 按用户语言选择变体，zh-sg/zh-my 归简体、zh-hk/zh-mo 归繁体
         return this.fonts.map((font: FontInfo) => ({
           id: font.id,
-          label: isHans ? font.name['zh-hans'] : font.name['zh-hant'],
+          label: conv({ hans: font.name['zh-hans'], hant: font.name['zh-hant'] }),
           value: font.id,
           version: font.version,
-          title: isHans ? font.title['zh-hans'] : font.title['zh-hant'],
+          link: parseWikiLink(conv({ hans: font.title['zh-hans'], hant: font.title['zh-hant'] })),
         }));
       },
       // 检测设置是否有变更
@@ -205,7 +203,6 @@ export function openDialog(
         onSave(newSettings);
         this.closeDialog();
       },
-      parseWikiLink,
     },
     template: `
       <cdx-dialog
@@ -292,15 +289,15 @@ export function openDialog(
                 name="font-selection"
                 :input-value="font.value"
               >
-                <a 
-                  v-if="parseWikiLink(font.title).url"
-                  :href="parseWikiLink(font.title).url" 
-                  :target="parseWikiLink(font.title).isExternal ? '_blank' : '_self'"
-                  :rel="parseWikiLink(font.title).isExternal ? 'noopener noreferrer' : ''"
+                <a
+                  v-if="font.link.url"
+                  :href="font.link.url"
+                  :target="font.link.isExternal ? '_blank' : '_self'"
+                  :rel="font.link.isExternal ? 'noopener noreferrer' : ''"
                 >
-                  {{ parseWikiLink(font.title).text }}
+                  {{ font.link.text }}
                 </a>
-                <span v-else>{{ parseWikiLink(font.title).text }}</span>
+                <span v-else>{{ font.link.text }}</span>
                 <template #description>
                   {{ $root.msg('unihan-version') }}{{ font.version }}
                 </template>
@@ -317,7 +314,11 @@ export function openDialog(
 
           <!-- 帮助链接 -->
           <p style="margin: 0;">
-            <a :href="$root.wikiUrl('Wikipedia:Unicode扩展汉字')" target="_blank">
+            <a
+              :href="$root.wikiUrl('Wikipedia:Unicode扩展汉字')"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {{ $root.msg('unihan-help') }}
             </a>
           </p>
