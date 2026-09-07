@@ -68,14 +68,6 @@
   }
 }
 
-/* ========== Overlay 容器 ========== */
-.unihan-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 999999;
-}
-
 /* ========== Tooltip 样式 ========== */
 
 /* Tooltip 容器 */
@@ -258,5 +250,20 @@
   .unihan-fade-out-down,
   .unihan-fade-out-up {
     animation-duration: 0.15s;
+  }
+}
+
+/* ========== 减少动态效果 ========== */
+@media (prefers-reduced-motion: reduce) {
+  .unihan-fade-in-up,
+  .unihan-fade-in-down,
+  .unihan-fade-out-down,
+  .unihan-fade-out-up {
+    animation: none;
+  }
+
+  .unihan-settings-icon,
+  .unihan-settings-button {
+    transition: none;
   }
 }

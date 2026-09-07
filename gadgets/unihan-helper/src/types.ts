@@ -18,12 +18,17 @@ export interface FontInfo {
 }
 
 /**
+ * 网络字形加载模式：fallback 本机有字形时优先本机；always 总是覆盖本机字形
+ */
+export type LoadMode = 'fallback' | 'always';
+
+/**
  * 设置类型
  */
 export interface Settings {
   enabled: boolean;
   useWebfont: boolean;
-  loadMode: 'fallback' | 'always';
+  loadMode: LoadMode;
   selectedFont: string;
 }
 
