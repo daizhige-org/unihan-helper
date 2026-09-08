@@ -34,7 +34,20 @@ pnpm run lint
 pnpm run lint:fix
 ```
 
-推送与 Pull Request 会由 GitHub Actions 自动运行 lint 与构建。
+### 冒烟测试
+
+```bash
+pnpm run build
+pnpm test
+```
+
+`tests/` 下的冒烟测试用 Playwright 在 Chromium 里加载 `dist/` 的构建产物：以
+`tests/mw-stub.js` 提供最小的 MediaWiki 环境（`mw.hook`、`mw.loader.using`、
+HanAssist 等的桩），验证提示的显示与关闭、动态替换正文后的绑定、设置保存后的
+即时生效、字体栈的拼接次序以及对非法 localStorage 设置的回退。首次运行需先
+`pnpm exec playwright install chromium`。
+
+推送与 Pull Request 会由 GitHub Actions 自动运行 lint、构建与冒烟测试。
 
 ## 部署方法
 因为构建目标为ES2017，小工具兼容的最低MediaWiki版本为[1.45.0-wmf.6](https://www.mediawiki.org/wiki/Project:Tech_News#Tech_News:_2025-23)。仓库中含有两个包，unihan-helper包含了小工具除设置窗口外的所有代码；unihan-helper-settings提供的设置窗口在需要时动态加载。

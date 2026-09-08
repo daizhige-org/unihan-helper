@@ -33,9 +33,16 @@ export default [
   },
   {
     // 构建脚本与各类配置文件运行在 Node 下
-    files: ['scripts/**/*.js', '*.config.js', 'gadgets/*/vite.config.js'],
+    files: ['scripts/**/*.js', '*.config.js', 'gadgets/*/vite.config.js', 'tests/**/*.mjs'],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+  {
+    // 煙霧測試頁的 MediaWiki 樁在瀏覽器裡執行
+    files: ['tests/**/*.js'],
+    languageOptions: {
+      globals: globals.browser,
     },
   },
 ];
