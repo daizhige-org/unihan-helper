@@ -45,7 +45,24 @@ after(async () => {
   server?.close();
 });
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+/** 提示的顯示與隱藏都經定時器與動畫，等待實際 DOM 狀態而非固定時長 */
+const waitShown = (tip) => tip.waitFor({ state: 'visible' });
+const waitGone = (tip) => tip.waitFor({ state: 'detached' });
+
+/** 等待設定樁的 openDialog 被呼叫到指定次數 */
+const waitDialogCalls = (page, count) =>
+  page.waitForFunction((n) => window.__openDialogCalls.length === n, count);
+
+/**
+ * 斷言「不會出現」：hover 延遲為 200ms，等其數倍後仍不存在即可視為不會出現。
+ * 解除綁定後元素上已無事件處理器，這裡只是給足餘裕。
+ */
+const assertNeverShown = async (tip) => {
+  await tip.waitFor({ state: 'attached', timeout: 800 }).then(
+    () => assert.fail('不應顯示 tooltip'),
+    () => {}
+  );
+};
 
 /**
  * 開啟測試頁；storage 為預先寫入 localStorage 的設定 JSON
@@ -69,8 +86,8 @@ async function openPage(storage) {
     },
     [STORAGE_KEY, storage ?? null]
   );
+  // reload() 等到 load 事件；小工具在同步腳本裡初始化，此時已完成
   await page.reload();
-  await sleep(200);
   return { page, errors };
 }
 
@@ -84,8 +101,7 @@ test('提示：懸停顯示、Esc 關閉、動態內容也會綁定', async () =
   assert.equal(await page.locator('.inline-unihan[title]').count(), 0, 'title 應被移除');
 
   await page.hover('#firstHeading .inline-unihan');
-  await sleep(400);
-  assert.equal(await tip.count(), 1, '懸停標題中的僻字應顯示 tooltip');
+  await waitShown(tip);
   assert.match(await tip.locator('.unihan-tooltip-text').textContent(), /title-char/);
   assert.equal(
     await page.locator('.unihan-settings-button').getAttribute('aria-label'),
@@ -94,8 +110,7 @@ test('提示：懸停顯示、Esc 關閉、動態內容也會綁定', async () =
   );
 
   await page.keyboard.press('Escape');
-  await sleep(400);
-  assert.equal(await tip.count(), 0, 'Esc 後 tooltip 應移除');
+  await waitGone(tip);
 
   // 替換正文並觸發 wikipage.content
   await page.evaluate(() => {
@@ -105,12 +120,11 @@ test('提示：懸停顯示、Esc 關閉、動態內容也會綁定', async () =
     window.mw.hook('wikipage.content').fire([content]);
   });
   await page.hover('#mw-content-text .inline-unihan');
-  await sleep(400);
-  assert.equal(await tip.count(), 1, 'hook 觸發後新內容應有 tooltip');
+  await waitShown(tip);
   assert.match(await tip.locator('.unihan-tooltip-text').textContent(), /dynamic-char/);
 
   await page.setViewportSize({ width: 500, height: 600 });
-  await sleep(200);
+  await waitShown(tip);
   assert.equal(await tip.count(), 1, '視窗縮放後 tooltip 應仍在');
 
   assert.deepEqual(errors, []);
@@ -122,11 +136,10 @@ test('設定：儲存後即時生效，停用時提供選單入口', async () =>
   const tip = page.locator('[role=tooltip]');
 
   await page.hover('#firstHeading .inline-unihan');
-  await sleep(400);
+  await waitShown(tip);
   await page.click('.unihan-settings-button');
-  await sleep(500);
+  await waitDialogCalls(page, 1);
   const calls = await page.evaluate(() => window.__openDialogCalls);
-  assert.equal(calls.length, 1, '設定按鈕應呼叫 openDialog');
   assert.equal(calls[0].fonts.length, 4, '應傳入四款字型');
   assert.deepEqual(calls[0].settings, {
     enabled: true,
@@ -135,7 +148,7 @@ test('設定：儲存後即時生效，停用時提供選單入口', async () =>
     selectedFont: 'Plangothic',
   });
 
-  // 停用
+  // 停用；onSave 內的解除綁定是同步的
   await page.evaluate(() =>
     window.__onSave({
       enabled: false,
@@ -144,20 +157,17 @@ test('設定：儲存後即時生效，停用時提供選單入口', async () =>
       selectedFont: 'Plangothic',
     })
   );
-  await sleep(400);
   assert.equal(await tip.count(), 0, '停用後 tooltip 應移除');
   assert.equal(await page.locator('.inline-unihan[title]').count(), 2, '停用後 title 應還原');
   const portlet = page.locator('#unihan-settings-portlet a');
   assert.equal(await portlet.count(), 1, '停用後應出現選單入口');
   assert.equal(await portlet.textContent(), '僻字輔助工具設定');
   await page.hover('#firstHeading .inline-unihan');
-  await sleep(400);
-  assert.equal(await tip.count(), 0, '停用後懸停不應再顯示 tooltip');
+  await assertNeverShown(tip);
 
   // 經選單入口重新啟用並開啟網路字型
   await portlet.click();
-  await sleep(300);
-  assert.equal(await page.evaluate(() => window.__openDialogCalls.length), 2);
+  await waitDialogCalls(page, 2);
   await page.evaluate(() =>
     window.__onSave({
       enabled: true,
@@ -166,7 +176,6 @@ test('設定：儲存後即時生效，停用時提供選單入口', async () =>
       selectedFont: 'JigmoTC',
     })
   );
-  await sleep(300);
   assert.equal(await page.locator('#unihan-settings-portlet').count(), 0, '啟用後入口應移除');
   assert.equal(await page.locator('.inline-unihan[title]').count(), 0, '啟用後 title 應再次移除');
 
@@ -183,8 +192,7 @@ test('設定：儲存後即時生效，停用時提供選單入口', async () =>
   assert.ok(family.startsWith('Jigmo TC, '), `always 模式網路字型應排最前：${family}`);
 
   await page.hover('#firstHeading .inline-unihan');
-  await sleep(400);
-  assert.equal(await tip.count(), 1, '重新啟用後懸停應顯示 tooltip');
+  await waitShown(tip);
 
   const stored = JSON.parse(await page.evaluate((k) => localStorage.getItem(k), STORAGE_KEY));
   assert.equal(stored.selectedFont, 'JigmoTC', '設定應寫入 localStorage');
@@ -206,9 +214,9 @@ test('設定：localStorage 裡的非法值回退預設', async () => {
   assert.ok(family.startsWith('Plangothic, '), `應回退預設字型與 always 模式：${family}`);
 
   await page.hover('#firstHeading .inline-unihan');
-  await sleep(400);
+  await waitShown(page.locator('[role=tooltip]'));
   await page.click('.unihan-settings-button');
-  await sleep(300);
+  await waitDialogCalls(page, 1);
   const settings = await page.evaluate(() => window.__openDialogCalls[0].settings);
   assert.deepEqual(settings, {
     enabled: true,
