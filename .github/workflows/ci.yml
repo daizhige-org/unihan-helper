@@ -11,7 +11,8 @@ env:
 jobs:
   check:
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    # Playwright 1.56 不支持 ubuntu-latest 现在指向的 26.04，升级 Playwright 前先固定
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
